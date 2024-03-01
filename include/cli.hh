@@ -19,6 +19,7 @@ struct args {
 	std::filesystem::path out;
 	size_t blk_size;
 	unsigned char part_scheme;
+	size_t part_align;
 };
 
 std::optional<args> cli_parse(int argc, char const *argv[]);

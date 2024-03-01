@@ -70,14 +70,8 @@ mbr_create(cli::args const &args)
 	util::wr_8(fout, 0x0);
 	util::pad_align(fout, args.blk_size, 0x0);
 	
-	// skip a megabyte because some things will require this.
-	// e.g. limine might attempt to install itself at 0x200, which would
-	// overwrite any filesystem signatures without the extra space.
-	uint32_t first_usable_lba = 0x100000 / args.blk_size;
-	util::pad_align(fout, 0x100000, 0x0);
-	
 	// determine partition size parameters and copy images.
-	uint32_t part_lba[4] = {first_usable_lba}, part_nsector[4] = {1};
+	uint32_t part_lba[4], part_nsector[4] = {1};
 	for (size_t i = 0; i < mbr_args.size(); ++i) {
 		std::ifstream fin{mbr_args[i].path, std::ios::binary};
 		if (!fin) {
@@ -85,18 +79,33 @@ mbr_create(cli::args const &args)
 			return 1;
 		}
 		
+		fin.seekg(0, std::ios::end);
+		long fin_size = fin.tellg();
+		fin.seekg(0, std::ios::beg);
+		if (fin_size < 0 || fin_size % args.blk_size) {
+			std::cerr << "mbr: either could not tell file or size is non-block-multiple - " << mbr_args[i].path << "!\n";
+			std::cerr << "\tyou cannot trust the integrity of the generated image\n";
+		}
+		
+		// align partition before doing anything.
+		util::pad_align(fout, args.part_align * args.blk_size, 0x0);
+		long pos = fout.tellp();
+		if (pos < 0) {
+			std::cerr << "mbr: LBA-determining file tell failed!\n";
+			return 1;
+		}
+		part_lba[i] = pos / args.blk_size;
+		
 		// copy filesystem image to partition.
-		// assume filesystem terminates on a sector boundary and perform
-		// a very dumb (but fast) copy with no realignment afterwards.
+		// assume filesystem image terminates on a sector boundary and
+		// perform a very dumb (but fast) copy.
+		// if it doesn't work, whatever - the user was warned.
 		char *cp_buf = new char[args.blk_size];
 		while (fin.read(cp_buf, args.blk_size)) {
 			++part_nsector[i];
 			fout.write(cp_buf, args.blk_size);
 		}
 		delete[] cp_buf;
-		
-		if (i > 0)
-			part_lba[i] = part_lba[i - 1] + part_nsector[i - 1];
 	}
 	
 	// create MBR partition table data.
@@ -184,7 +193,7 @@ mbr_args_from_rest(std::vector<std::string> const &rest)
 			return std::nullopt;
 		}
 		
-		long type = strtol(rest[3 * i + 2].c_str(), nullptr, 16);
+		long type = strtol(rest[3 * i + 2].c_str(), nullptr, 0);
 		if (type <= 0x0 || type >= 0x100) {
 			std::cerr << "mbr: invalid partition type - " << rest[3 * i + 2] << "!\n";
 			return std::nullopt;

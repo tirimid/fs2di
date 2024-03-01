@@ -4,12 +4,17 @@
 #include <cstring>
 #include <iostream>
 
+#define BLK_SIZE_DEFAULT 512
+#define PART_SCHEME_DEFAULT PS_MBR
+#define PART_ALIGN_DEFAULT 2048
+
 namespace cli {
 
 struct opt_args {
 	std::optional<std::filesystem::path> out;
 	std::optional<size_t> blk_size;
 	std::optional<unsigned char> part_scheme;
+	std::optional<size_t> part_align;
 };
 
 static int short_flag(char f, opt_args &out, std::string const &p_name);
@@ -52,22 +57,20 @@ cli_parse(int argc, char const *argv[])
 		return std::nullopt;
 	}
 	
-	if (!opt_args.blk_size) {
-		std::cerr << "cli: no block size specified!\n";
-		std::cerr << "\tuse --blk-size=(size) to specify one\n";
-		return std::nullopt;
-	}
+	if (!opt_args.blk_size)
+		opt_args.blk_size = BLK_SIZE_DEFAULT;
 	
-	if (!opt_args.part_scheme) {
-		std::cerr << "cli: no partition scheme specified!\n";
-		std::cerr << "\tuse --part-scheme=(type) to specify one\n";
-		return std::nullopt;
-	}
+	if (!opt_args.part_scheme)
+		opt_args.part_scheme = PART_SCHEME_DEFAULT;
+	
+	if (!opt_args.part_align)
+		opt_args.part_align = PART_ALIGN_DEFAULT;
 	
 	args args = {
 		.out = *opt_args.out,
 		.blk_size = *opt_args.blk_size,
 		.part_scheme = *opt_args.part_scheme,
+		.part_align = *opt_args.part_align,
 	};
 	
 	while (i < argc)
@@ -112,7 +115,7 @@ long_opt(std::string const &o, opt_args &out)
 	std::string val = o.substr(key_len + 1, o.length() - key_len - 1);
 	
 	if (key == "blk-size") {
-		int blk_size = atoi(val.c_str());
+		long blk_size = strtol(val.c_str(), nullptr, 0);
 		if (!blk_size) {
 			std::cerr << "cli: invalid block size - " << val << "!\n";
 			return 1;
@@ -124,13 +127,20 @@ long_opt(std::string const &o, opt_args &out)
 		out.blk_size = blk_size;
 	} else if (key == "out")
 		out.out = val;
-	else if (key == "part-scheme") {
+	else if (key == "part-align") {
+		long align = strtol(val.c_str(), nullptr, 0);
+		if (!align) {
+			std::cerr << "cli: invalid partition alignment - " << val << "!\n";
+			return 1;
+		}
+		out.part_align = align;
+	} else if (key == "part-scheme") {
 		if (val == "mbr")
 			out.part_scheme = PS_MBR;
 		else if (val == "gpt")
 			out.part_scheme = PS_GPT;
 		else {
-			std::cerr << "cli: unrecognized part-scheme - " << val << "!\n";
+			std::cerr << "cli: unrecognized partitioning scheme - " << val << "!\n";
 			return 1;
 		}
 	} else {
@@ -148,12 +158,13 @@ usage(std::string const &p_name)
 	std::cout << "documentation at https://tirimid.net/software/fs2di.html\n";
 	std::cout << '\n';
 	std::cout << "usage:\n";
-	std::cout << '\t' << p_name << " <options> <files...>\n";
+	std::cout << '\t' << p_name << " <options> ...\n";
 	std::cout << "options:\n";
-	std::cout << "\t--blk-size=(size)     linear block size\n";
+	std::cout << "\t--blk-size=(size)     linear block size in bytes\n";
 	std::cout << "\t--help, -h            display general help information\n";
 	std::cout << "\t--out=(file)          file where disk image will be written\n";
-	std::cout << "\t--part-scheme=(type)  partition scheme\n";
+	std::cout << "\t--part-align=(align)  minimum partition alignment in blocks\n";
+	std::cout << "\t--part-scheme=(type)  partitioning scheme\n";
 }
 
 }

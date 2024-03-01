@@ -27,7 +27,7 @@ To turn a filesystem image called `disk-fs.img` into a bootable disk image
 called `disk.img`, run:
 
 ```
-$ fs2di --out=disk.img --blk-size=512 --part-scheme=mbr disk-fs.img boot 6
+$ fs2di --out=disk.img disk-fs.img boot 6
 ```
 
 This assumes a sector size of 512 bytes, a partitioning scheme of MBR, and a
