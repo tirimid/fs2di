@@ -93,7 +93,7 @@ mbr_create(cli::args const &args)
 			++part_nsector[i];
 			fout.write(cp_buf, args.blk_size);
 		}
-		delete cp_buf;
+		delete[] cp_buf;
 		
 		if (i > 0)
 			part_lba[i] = part_lba[i - 1] + part_nsector[i - 1];
