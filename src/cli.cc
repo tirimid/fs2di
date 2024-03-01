@@ -9,7 +9,7 @@ namespace cli {
 struct opt_args {
 	std::optional<std::filesystem::path> out;
 	std::optional<size_t> blk_size;
-	std::optional<unsigned char> part_type;
+	std::optional<unsigned char> part_scheme;
 };
 
 static int short_flag(char f, opt_args &out, std::string const &p_name);
@@ -58,16 +58,16 @@ cli_parse(int argc, char const *argv[])
 		return std::nullopt;
 	}
 	
-	if (!opt_args.part_type) {
-		std::cerr << "cli: no partition scheme type specified!\n";
-		std::cerr << "\tuse --part-type=(type) to specify one\n";
+	if (!opt_args.part_scheme) {
+		std::cerr << "cli: no partition scheme specified!\n";
+		std::cerr << "\tuse --part-scheme=(type) to specify one\n";
 		return std::nullopt;
 	}
 	
 	args args = {
 		.out = *opt_args.out,
 		.blk_size = *opt_args.blk_size,
-		.part_type = *opt_args.part_type,
+		.part_scheme = *opt_args.part_scheme,
 	};
 	
 	while (i < argc)
@@ -117,14 +117,20 @@ long_opt(std::string const &o, opt_args &out)
 			std::cerr << "cli: invalid block size - " << val << "!\n";
 			return 1;
 		}
+		if (blk_size != 512) {
+			std::cerr << "cli: only 512-byte blocks are currently supported!\n";
+			return 1;
+		}
 		out.blk_size = blk_size;
 	} else if (key == "out")
 		out.out = val;
-	else if (key == "part-type") {
-		if (val == "gpt")
-			out.part_type = PT_GPT;
+	else if (key == "part-scheme") {
+		if (val == "mbr")
+			out.part_scheme = PS_MBR;
+		else if (val == "gpt")
+			out.part_scheme = PS_GPT;
 		else {
-			std::cerr << "cli: unrecognized part-type - " << val << "!\n";
+			std::cerr << "cli: unrecognized part-scheme - " << val << "!\n";
 			return 1;
 		}
 	} else {
@@ -138,13 +144,16 @@ long_opt(std::string const &o, opt_args &out)
 static void
 usage(std::string const &p_name)
 {
+	std::cout << "for more information on fs2di and examples, see the\n";
+	std::cout << "documentation at https://tirimid.net/software/fs2di.html\n";
+	std::cout << '\n';
 	std::cout << "usage:\n";
 	std::cout << '\t' << p_name << " <options> <files...>\n";
 	std::cout << "options:\n";
-	std::cout << "\t--blk-type=(size)   linear block size\n";
-	std::cout << "\t--help, -h          display general help information\n";
-	std::cout << "\t--out=(file)        file where disk image will be written\n";
-	std::cout << "\t--part-type=(type)  partition scheme type\n";
+	std::cout << "\t--blk-size=(size)     linear block size\n";
+	std::cout << "\t--help, -h            display general help information\n";
+	std::cout << "\t--out=(file)          file where disk image will be written\n";
+	std::cout << "\t--part-scheme=(type)  partition scheme\n";
 }
 
 }
