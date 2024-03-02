@@ -31,59 +31,59 @@ wr_str(std::ofstream &fout, char const *str)
 }
 
 void
-wr_16_le(std::ofstream &fout, uint16_t data)
-{
-	wr_8(fout, data >> 8);
-	wr_8(fout, data & 0xff);
-}
-
-void
-wr_24_le(std::ofstream &fout, uint32_t data)
-{
-	wr_16_le(fout, data >> 8);
-	wr_8(fout, data & 0xff);
-}
-
-void
-wr_32_le(std::ofstream &fout, uint32_t data)
-{
-	wr_16_le(fout, data >> 16);
-	wr_16_le(fout, data & 0xffff);
-}
-
-void
-wr_64_le(std::ofstream &fout, uint64_t data)
-{
-	wr_32_le(fout, data >> 32);
-	wr_32_le(fout, data & 0xffffffff);
-}
-
-void
 wr_16_be(std::ofstream &fout, uint16_t data)
 {
-	wr_8(fout, data & 0xff);
 	wr_8(fout, data >> 8);
+	wr_8(fout, data & 0xff);
 }
 
 void
 wr_24_be(std::ofstream &fout, uint32_t data)
 {
-	wr_8(fout, data & 0xff);
 	wr_16_be(fout, data >> 8);
+	wr_8(fout, data & 0xff);
 }
 
 void
 wr_32_be(std::ofstream &fout, uint32_t data)
 {
-	wr_16_be(fout, data & 0xffff);
 	wr_16_be(fout, data >> 16);
+	wr_16_be(fout, data & 0xffff);
 }
 
 void
 wr_64_be(std::ofstream &fout, uint64_t data)
 {
-	wr_16_be(fout, data & 0xffffffff);
-	wr_16_be(fout, data >> 32);
+	wr_32_be(fout, data >> 32);
+	wr_32_be(fout, data & 0xffffffff);
+}
+
+void
+wr_16_le(std::ofstream &fout, uint16_t data)
+{
+	wr_8(fout, data & 0xff);
+	wr_8(fout, data >> 8);
+}
+
+void
+wr_24_le(std::ofstream &fout, uint32_t data)
+{
+	wr_8(fout, data & 0xff);
+	wr_16_le(fout, data >> 8);
+}
+
+void
+wr_32_le(std::ofstream &fout, uint32_t data)
+{
+	wr_16_le(fout, data & 0xffff);
+	wr_16_le(fout, data >> 16);
+}
+
+void
+wr_64_le(std::ofstream &fout, uint64_t data)
+{
+	wr_16_le(fout, data & 0xffffffff);
+	wr_16_le(fout, data >> 32);
 }
 
 void

@@ -123,14 +123,14 @@ mbr_create(cli::args const &args)
 	util::wr_8(fout, 0x0);
 	util::pad_align(fout, args.blk_size - 72, 0x0);
 	
-	util::wr_32_be(fout, rand()); // generate a (probably) unique disk ID.
-	util::wr_16_be(fout, 0x0); // reserved.
+	util::wr_32_le(fout, rand()); // generate a (probably) unique disk ID.
+	util::wr_16_le(fout, 0x0); // reserved.
 	
 	for (part_tab_ent const &ent : part_tab)
 		wr_pte(fout, ent);
 	
 	util::pad_align(fout, args.blk_size - 2, 0x0);
-	util::wr_16_be(fout, 0xaa55); // boot signature.
+	util::wr_16_le(fout, 0xaa55); // boot signature.
 	
 	return 0;
 }
@@ -172,8 +172,8 @@ wr_pte(std::ofstream &fout, part_tab_ent const &ent)
 	util::wr_8(fout, ent.last_sector_cyl);
 	util::wr_8(fout, ent.last_cyl);
 	
-	util::wr_32_be(fout, ent.start_lba);
-	util::wr_32_be(fout, ent.nsector);
+	util::wr_32_le(fout, ent.start_lba);
+	util::wr_32_le(fout, ent.nsector);
 }
 
 static std::optional<std::vector<mbr_arg>>
