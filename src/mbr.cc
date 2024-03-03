@@ -71,7 +71,7 @@ mbr_create(cli::args const &args)
 	util::pad_align(fout, args.blk_size, 0x0);
 	
 	// determine partition size parameters and copy images.
-	uint32_t part_lba[4], part_nsector[4] = {1};
+	uint32_t part_lba[4], part_nsector[4] = {0};
 	for (size_t i = 0; i < mbr_args.size(); ++i) {
 		std::ifstream fin{mbr_args[i].path, std::ios::binary};
 		if (!fin) {
