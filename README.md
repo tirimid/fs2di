@@ -12,12 +12,12 @@ MBR is supported, but GPT support will probably eventually be added).
 
 System / software dependencies are:
 
-* mincbuild (for build)
+* mincbuild (optional, for build)
 * A shell environment (for program execution)
 
 ## Management
 
-* To build fs2di, run `mincbuild`
+* To build fs2di, run `mincbuild` or `make`
 * To install fs2di after building, run `./install.sh` as root
 * To uninstall fs2di after installation, run `./uninstall.sh` as root
 
